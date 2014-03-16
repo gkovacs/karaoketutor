@@ -1,0 +1,44 @@
+<head>
+  <title>karaoketutor</title>
+</head>
+
+<body>
+  {{> topinfo}}
+  {{> videoinput}}
+  {{> hello}}
+</body>
+
+<template name="topinfo">
+  <h1>Karaoke Tutor</h1>
+  <p>Provide a <a href="http://www.youtube.com/" target="_blank">Youtube</a> URL for a song:</p>
+</template>
+
+<template name="videoinput">
+  <div>
+    Youtube URL: <input type="text" id="ytinputurl"></input>
+    <button type="button" class="btn btn-default" id="ytinputadd">Add New Song</button><br/><br/>
+    <p>Or try an existing song:</p>
+    Search Songs: <input type="text" id="searchsongs"></input><br/><br/>
+    {{#each songs}}
+      {{> songtemplate}}
+    {{/each}}
+  </div>
+</template>
+
+<template name="songtemplate">
+  <b>Song:</b> <a href="{{url}}" target="_blank">{{name}}</a><br/>
+  <b>Lyrics:</b>
+  {{#each lyrics}}
+    {{> lyricstemplate}}
+  {{/each}}
+  <button type="button" class="btn btn-default addlyrics">Add Lyrics</button><br/>
+</template>
+
+<template name="lyricstemplate">
+  <button type="button" class="btn btn-default viewlyrics">{{preview}}...</button>
+</template>
+
+<template name="hello">
+  {{greeting}}
+  <input type="button" value="Click" />
+</template>
