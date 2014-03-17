@@ -19,10 +19,13 @@ Meteor.methods {
     snippet.time_added = new Date().getTime()
     YoutubeSnippets.insert(snippet)
     return YoutubeSnippets.findOne {_id: videoID}
+  clientCall: (clientId, method, args, callback) ->
+    console.log 'clientId is:' + clientId
+    Meteor.ClientCall.apply(clientId, method, args, callback)
 }
 
 Meteor.startup ->
-  console.log 'meteor server starting up!'
+  #console.log 'meteor server starting up!'
   #Songs = root.Songs
   #Lyrics = root.Lyrics
   #YoutubeSnippets = root.YoutubeSnippets

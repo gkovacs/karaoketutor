@@ -179,12 +179,13 @@ videoNameFromID = function(videoID){
 };
 Template.lyricstemplate.events({
   'click .viewlyrics': function(evt, template){
-    var lyrics, lyricID, songname;
+    var lyrics, lyricID, gameID, songname;
     lyrics = template.data.text;
     lyricID = template.data.lyricID;
+    gameID = root.randomString(10);
     songname = videoNameFromID(template.data.videoID);
     console.log(songname);
-    return bootbox.confirm("" + songname + "<br><br>\n<a href=\"/playlyrics?lyricID=" + lyricID + "\" target=\"_blank\">Start Playing</a><br><br>\n" + lyrics, function(result){
+    return bootbox.confirm("" + songname + "<br><br>\n<a href=\"/mktimings?lyricID=" + lyricID + "&gameID=" + gameID + "\" target=\"_blank\">Start New 2-Player Game</a><br><br>\n" + lyrics, function(result){
       return console.log(result);
     });
   }

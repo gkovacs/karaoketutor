@@ -27,10 +27,13 @@ Meteor.methods({
     return YoutubeSnippets.findOne({
       _id: videoID
     });
+  },
+  clientCall: function(clientId, method, args, callback){
+    console.log('clientId is:' + clientId);
+    return Meteor.ClientCall.apply(clientId, method, args, callback);
   }
 });
 Meteor.startup(function(){
-  console.log('meteor server starting up!');
   if (Songs.find().count() === 0) {
     Songs.insert({
       name: 'Katy Perry - Dark Horse (Official) ft. Juicy J',

@@ -3,7 +3,10 @@
   "dependencies": {
     "basePackages": {
       "bootstrap-3": {},
-      "iron-router": {}
+      "iron-router": {},
+      "client-call": {},
+      "jquery-cookie": {},
+      "prelude": {}
     },
     "packages": {
       "bootstrap-3": {
@@ -15,6 +18,21 @@
         "git": "https://github.com/EventedMind/iron-router.git",
         "tag": "v0.6.4",
         "commit": "927bbaed1b87894fb6fb70807f74ff3a5bd89f29"
+      },
+      "client-call": {
+        "git": "https://github.com/subhog/meteor-client-call.git",
+        "tag": "v0.2.0",
+        "commit": "c6fd2429879002195010caca0a9b9cc3f10c51bb"
+      },
+      "jquery-cookie": {
+        "git": "https://github.com/BenjaminRH/meteor-jquery-cookie.git",
+        "tag": "v0.1.0",
+        "commit": "084bc5bf612639008efe03f3948e816df44c0f36"
+      },
+      "prelude": {
+        "git": "https://github.com/maninalift/prelude-ls-meteor.git",
+        "tag": "v1.0.3",
+        "commit": "d850ae208c3588db627260cd6299e923024009f5"
       }
     }
   }

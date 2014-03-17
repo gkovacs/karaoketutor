@@ -3,7 +3,11 @@
   <p>LyricID is {{lyricID}}</p>
   <p>VideoID is {{videoID}}</p>
   <p>Song being played is {{name}}</p>
+  <p>GameID is {{gameID}}</p>
+  <p>numPlayers is {{numPlayers}}</p>
   <p>URL at {{url}}</p>
+  <p>userID is {{userID}}</p>
+  <button type="button" class="btn btn-default"  id="playPause">Play</button><br>
   <div id="ytplayer"></div>
 
 <!--<div style="position:relative;width:267px;height:25px;overflow:hidden;">
@@ -13,10 +17,18 @@
     </iframe>
   </div>
 </div>-->
-
+  {{setupBackend}}
+  <div class="unselectable">
   {{#each lyricLines}}
-    {{line}}<br>
+    <br><br>
+    {{#each words}}
+      {{> wordtemplate}}
+    {{/each}}
   {{/each}}
+  </div>
   {{invokeAfterLoad}}
 </template>
 
+<template name="wordtemplate">
+  <span class="lyricWord lyricWord_{{global_word_idx}} {{isActive}}" style="{{extraPadding}} padding-top: 10px; padding-bottom: 10px; cursor: pointer; cursor: hand;" global_word_idx={{global_word_idx}} line_idx={{line_idx}} pos_in_line={{pos_in_line}}>{{word}}</span>
+</template>

@@ -148,6 +148,7 @@ Template.lyricstemplate.events {
   'click .viewlyrics': (evt, template) ->
     lyrics = template.data.text
     lyricID = template.data.lyricID
+    gameID = root.randomString(10)
     #target = $(evt.currentTarget)
     #console.log lyrics
     #console.log template
@@ -157,7 +158,7 @@ Template.lyricstemplate.events {
     #console.log template
     bootbox.confirm("""
     #{songname}<br><br>
-    <a href="/playlyrics?lyricID=#{lyricID}" target="_blank">Start Playing</a><br><br>
+    <a href="/mktimings?lyricID=#{lyricID}&gameID=#{gameID}" target="_blank">Start New 2-Player Game</a><br><br>
     #{lyrics}
     """, (result) ->
       console.log result
