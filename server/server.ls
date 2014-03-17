@@ -30,7 +30,8 @@ Meteor.startup ->
     Songs.insert {
       name: 'Katy Perry - Dark Horse (Official) ft. Juicy J',
       url: 'http://www.youtube.com/watch?v=0KSOMA3QBU0',
-      _id: 'http://www.youtube.com/watch?v=0KSOMA3QBU0',
+      videoID: '0KSOMA3QBU0',
+      _id: '0KSOMA3QBU0',
       time_added: new Date().getTime(),
       thumbs_up: 0,
       thumbs_down: 0,
@@ -39,7 +40,8 @@ Meteor.startup ->
     Songs.insert {
       name: 'John Legend - All of Me',
       url: 'http://www.youtube.com/watch?v=450p7goxZqg',
-      _id: 'http://www.youtube.com/watch?v=450p7goxZqg',
+      videoID: '450p7goxZqg',
+      _id: '450p7goxZqg',
       time_added: new Date().getTime(),
       thumbs_up: 0,
       thumbs_down: 0,

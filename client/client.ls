@@ -49,7 +49,8 @@ addNewVideo = (songurl) ->
   if songurl.indexOf('http://www.youtube.com/watch?v=') != 0
     bootbox.alert('the song url must start with http://www.youtube.com/watch?v=')
     return false
-  duplicate = Songs.findOne({_id: songurl})
+  songID = songurl.split('http://www.youtube.com/watch?v=').join('')
+  duplicate = Songs.findOne({_id: songID})
   if duplicate?
     bootbox.alert('this video is a duplicate of ' + duplicate.name)
     return false
@@ -57,7 +58,8 @@ addNewVideo = (songurl) ->
     Songs.insert {
       name: songname,
       url: songurl,
-      _id: songurl,
+      videoID: songID,
+      _id: songID,
       time_added: new Date().getTime(),
       thumbs_up: 0,
       thumbs_down: 0,
@@ -81,12 +83,13 @@ Template.videoinput.events {
 }
 
 Template.songtemplate.lyrics = ->
-  return Lyrics.find {songurl: this.url}
+  return Lyrics.find {videoID: this.videoID}
 
 Template.songtemplate.events {
   'click .addlyrics': (evt, template) ->
     #target = $(evt.currentTarget)
     songname = template.data.name
+    videoID = template.data.videoID
     songurl = template.data.url
     bootbox.confirm("""
     <div style="height: 300px">
@@ -101,14 +104,13 @@ Template.songtemplate.events {
         if songlyrics == ''
           return
         numLyricsForSong = template.data.lyricIDs.length
-        console.log template.data.lyricIDs
-        console.log template.data.lyricIDs.length
-        lyricID = songurl + '_' + numLyricsForSong
+        lyricID = videoID + '_' + numLyricsForSong
         console.log lyricID
         Lyrics.insert {
           _id: lyricID,
+          lyricID: lyricID,
           lyricidx: numLyricsForSong,
-          songurl: songurl,
+          videoID: videoID,
           text: songlyrics,
           timingIDs: [],
           time_added: new Date().getTime(),
@@ -116,7 +118,7 @@ Template.songtemplate.events {
           thumbs_down: 0
         }
         Songs.update({
-          _id: songurl
+          _id: videoID
         }, {
           $push: {
             lyricIDs: lyricID
@@ -135,25 +137,27 @@ Template.lyricstemplate.preview = ->
   return lines.join(' ').substring(0, 40)
 
 Template.lyricstemplate.songname = ->
-  return songNameFromUrl(this.songurl)
+  return videoNameFromID(this.videoID)
 
-songNameFromUrl = (songurl) ->
+videoNameFromID = (videoID) ->
   return Songs.findOne({
-    _id: songurl
+    _id: videoID
   }).name
 
 Template.lyricstemplate.events {
   'click .viewlyrics': (evt, template) ->
     lyrics = template.data.text
+    lyricID = template.data.lyricID
     #target = $(evt.currentTarget)
     #console.log lyrics
     #console.log template
     #songname = target.attr 'songname'
-    songname = songNameFromUrl(template.data.songurl)
+    songname = videoNameFromID(template.data.videoID)
     console.log songname
     #console.log template
     bootbox.confirm("""
     #{songname}<br><br>
+    <a href="/playlyrics?lyricID=#{lyricID}" target="_blank">Start Playing</a><br><br>
     #{lyrics}
     """, (result) ->
       console.log result

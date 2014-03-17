@@ -1,12 +1,16 @@
-<head>
-  <title>karaoketutor</title>
-</head>
+<template name="layout">
+  {{yield}}
+</template>
 
-<body>
+<template name="home">
   {{> topinfo}}
   {{> videoinput}}
   {{> hello}}
-</body>
+</template>
+
+<template name="loading">
+  loading
+</template>
 
 <template name="topinfo">
   <h1>Karaoke Tutor</h1>
