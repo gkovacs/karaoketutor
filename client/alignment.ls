@@ -8,6 +8,27 @@ if not prelude?
 
 FRACSEC = 4
 
+logsToTimeListHoldMulti = root.logsToTimeListHoldMulti = (logsList) ->
+  maxVideoTime = prelude.maximum [prelude.maximum([videoTime for {videoTime} in logs]) for logs in logsList]
+  maxTime = Math.round(maxVideoTime*FRACSEC)
+  maxIdx = prelude.maximum [prelude.maximum([wordIdx for {wordIdx} in logs]) for logs in logsList]
+  output = []
+  for time in [0 to maxTime]
+    output.push [0]*(maxIdx+1)
+  for logs in logsList
+    sortedLogs = prelude.sort-by (.videoTime), logs
+    for idx in [0 til sortedLogs.length]
+      {wordIdx,videoTime} = sortedLogs[idx]
+      startTime = Math.round(videoTime*FRACSEC)
+      nextIntervalData = sortedLogs[idx+1]
+      if nextIntervalData?
+        nextTime = nextIntervalData.videoTime * FRACSEC |> Math.round
+      else
+        nextTime = maxTime+1
+      for time in [startTime til nextTime]
+        output[time][wordIdx] += 1
+  return output
+
 logsToTimeListHold = root.logsToTimeListHold = (logs) ->
   maxVideoTime = prelude.maximum [videoTime for {videoTime} in logs]
   maxTime = Math.round(maxVideoTime*FRACSEC)
@@ -19,10 +40,11 @@ logsToTimeListHold = root.logsToTimeListHold = (logs) ->
   for idx in [0 til sortedLogs.length]
     {wordIdx,videoTime} = sortedLogs[idx]
     startTime = Math.round(videoTime*FRACSEC)
-    nextVideoTime = sortedLogs[idx+1]
-    if not nextVideoTime?
-      nextVideoTime = maxVideoTime
-    nextTime = Math.round(nextVideoTime*FRACSEC)
+    nextIntervalData = sortedLogs[idx+1]
+    if nextIntervalData?
+      nextTime = nextIntervalData.videoTime * FRACSEC |> Math.round
+    else
+      nextTime = maxTime+1
     for time in [startTime til nextTime]
       output[time][wordIdx] += 1
   return output
@@ -38,6 +60,42 @@ logsToTimeList = root.logsToTimeList = (logs) ->
     output[time][wordIdx] += 1
   return output
 
+compute_time_word_path = root.compute_time_word_path = (time_to_gwordnum_count) ->
+  DP = [] # scores at time -> gwordnum
+  backptr_wordtrans = [] # 1 if we got there by word transition, 0 otherwise
+  for time,gwordnum_count of time_to_gwordnum_count
+    DP[time] = []
+    backptr_wordtrans[time] = []
+    for gwordnum in [0 to Math.min(time, gwordnum_count.length-1)]
+      DP[time].push(0)
+      backptr_wordtrans[time].push(0)
+  for gwordnum_count,time in time_to_gwordnum_count
+    if time == 0
+      DP[0][0] = time_to_gwordnum_count[0][0]
+      continue
+    for gwordnum in [0 to Math.min(time, gwordnum_count.length-1)]
+      wordtransition_score = -1
+      if gwordnum > 0
+        wordtransition_score = DP[time-1][gwordnum-1] + time_to_gwordnum_count[time][gwordnum]
+      wordstay_score = -1
+      if DP[time-1]? and DP[time-1][gwordnum]?
+        wordstay_score = DP[time-1][gwordnum] + time_to_gwordnum_count[time][gwordnum]
+      if wordtransition_score > wordstay_score
+        backptr_wordtrans[time][gwordnum] = 1
+        DP[time][gwordnum] = wordtransition_score
+      else
+        DP[time][gwordnum] = wordstay_score
+  time_to_word = []
+  last_row = backptr_wordtrans[backptr_wordtrans.length-1]
+  word_idx = last_row.length - 1
+  for i in [backptr_wordtrans.length-1 to 0 by -1]
+    is_wordtrans = backptr_wordtrans[i][word_idx]
+    time_to_word.push(word_idx)
+    if is_wordtrans
+      word_idx -= 1
+  time_to_word.reverse()
+  return time_to_word
+
 
 main = ->
   #console.log prelude.maximum([3,6,8])
@@ -47,7 +105,7 @@ main = ->
   timeList = logsToTimeList logs
   #console.log timeList
   #console.log timeList
-  compute_time_word_path = require('./alignment_core').compute_time_word_path
+  #compute_time_word_path = require('./alignment_core2').compute_time_word_path
   time_word_path = compute_time_word_path timeList
   console.log JSON.stringify(time_word_path)
 

@@ -5,7 +5,7 @@ root.videoID = null
 root.gameID = null
 root.lyricID = null
 root.numWordsTotal = 1
-root.activeIndex = 0
+root.activeIndex = -1
 root.prevActiveIndex = 0
 root.prevprevActiveIndex = 0
 root.atEndOfLine = false
@@ -17,17 +17,56 @@ root.gameLogs = {}
 
 root.indexInTimingList = 0
 
-submitTimingLogs = root.submitTimingLogs = (logs) ->
-  if not logs?
-    logs = root.gameLogs[root.gameID]
+getTimingLogsFirst = root.getTimingLogs = ->
+  return TimingLogs.findOne({_id: root.lyricID + '_0'}).logs
+
+getTimingLogs = root.getTimingLogs = ->
+  output = []
+  for timingID in Lyrics.findOne({_id: root.lyricID}).timingIDs
+    output.push TimingLogs.findOne({_id: timingID}).logs
+  return output
+
+playServerTimingLogsFirst = root.playFirstServerTimingLogs = ->
+  #timeList = logsToTimeList(getTimingLogs())
+  timeList = logsToTimeListHold(getTimingLogsFirst())
+  time_word_path = compute_time_word_path(timeList)
+  playbackRecorded(time_word_path)
+
+playServerTimingLogs = root.playServerTimingLogs = ->
+  #timeList = logsToTimeList(getTimingLogs())
+  timeList = logsToTimeListHoldMulti(getTimingLogs())
+  time_word_path = compute_time_word_path(timeList)
+  playbackRecorded(time_word_path)
+
+submitTimingLogs = root.submitTimingLogs = ->
+  logs = root.gameLogs[root.gameID]
+  numTimingsForLyric = Lyrics.findOne({_id: root.lyricID}).timingIDs.length
+  timingID = root.lyricID + '_' + numTimingsForLyric
   TimingLogs.insert {
-    lyricID: lyricID
+    _id: timingID
+    timingID: timingID
+    lyricID: root.lyricID
+    videoID: root.videoID
+    time_added: new Date().getTime()
     logs: logs
   }
+  Lyrics.update({
+    _id: root.lyricID
+  }, {
+    $push: {
+      timingIDs: timingID
+    }
+  })
+  root.gameLogs[root.gameID] = []
 
 playbackRecorded = root.playbackRecorded = (timingList) ->
   root.indexInTimingList = 0
   root.clientCall('', 'playVideoAtTimeForGame', [0, root.gameID])
+  for let wordIdx,timingIdx in timingList
+    setTimeout ->
+      setActiveIndex(wordIdx)
+    , timingIdx * 250
+  /*
   setInterval ->
     if root.indexInTimingList >= timingList.length
       return
@@ -35,6 +74,7 @@ playbackRecorded = root.playbackRecorded = (timingList) ->
     #root.clientCall('', 'setActiveIndexForGame', [timingList[root.indexInTimingList], root.gameID])
     root.indexInTimingList += 1
   , 250
+  */
 
 scrollToView = (element) ->
   offset = element.offset().top
@@ -51,6 +91,8 @@ scrollToView = (element) ->
 
 incrementActiveIndex = ->
   idx = Session.get('activeIndex') + 1
+  if isNaN idx
+    idx = 0
   #idx = TimingGames.findOne({_id: root.gameID}).activeIndex + 1
   if idx >= root.numWordsTotal
     idx = root.numWordsTotal-1
@@ -58,6 +100,8 @@ incrementActiveIndex = ->
 
 decrementActiveIndex = ->
   idx = Session.get('activeIndex') - 1
+  if isNaN idx
+    idx = 0
   #idx = TimingGames.findOne({_id: root.gameID}).activeIndex - 1
   if idx <= 0
     idx = 0
@@ -103,17 +147,22 @@ onPlayerStateChange = root.onPlayerStateChange = -> (event) ->
     root.clientCall('', 'pauseVideoAtTimeForGame', [root.ytplayer.getCurrentTime(), root.gameID])
 */
 
+togglePlayPause = root.tooglePlayPause = ->
+  action = $('#playPause').text()
+  if action == 'Play'
+    #$('#playPause').text('Pause')
+    #root.ytplayer.pauseVideo()
+    root.clientCall('', 'playVideoAtTimeForGame', [root.ytplayer.getCurrentTime(), root.gameID])
+  else
+    #$('#playPause').text('Play')
+    #root.ytplayer.playVideo()
+    root.clientCall('', 'pauseVideoAtTimeForGame', [root.ytplayer.getCurrentTime(), root.gameID])
+
 Template.mktimings.events {
   'click #playPause': (evt, template) ->
-    action = $('#playPause').text()
-    if action == 'Play'
-      #$('#playPause').text('Pause')
-      #root.ytplayer.pauseVideo()
-      root.clientCall('', 'playVideoAtTimeForGame', [root.ytplayer.getCurrentTime(), root.gameID])
-    else
-      #$('#playPause').text('Play')
-      #root.ytplayer.playVideo()
-      root.clientCall('', 'pauseVideoAtTimeForGame', [root.ytplayer.getCurrentTime(), root.gameID])
+    togglePlayPause()
+  'click #playPrerecorded': (evt, template) ->
+    playServerTimingLogs()
 }
 
 onYouTubeIframeAPIReady = root.onYouTubeIframeAPIReady = ->
@@ -205,6 +254,8 @@ mouseoverFN = (evt, template) ->
   newidx = template.data.global_word_idx
   lineidx = template.data.line_idx
   linepos = template.data.pos_in_line
+  if root.usingKeyboard
+    return
   if root.atEndOfLine
     if lineidx > root.activeLineIndex and linepos == 0 and lineidx - root.activeLineIndex < 3
       setActiveIndexAll(newidx)
@@ -215,6 +266,7 @@ mouseoverFN = (evt, template) ->
 
 Template.wordtemplate.events {
   'click .lyricWord': (evt, template) ->
+    root.usingKeyboard = false
     setActiveIndexAll(template.data.global_word_idx)
   'mouseover .lyricWord': mouseoverFN
   'mouseenter .lyricWord': mouseoverFN
@@ -222,15 +274,20 @@ Template.wordtemplate.events {
     setActiveIndexAll(template.data.global_word_idx)
 }
 
+root.usingKeyboard = false
+
 $(document).keydown (evt) ->
   keycode = if evt.keyCode? then evt.keyCode else evt.which
   if keycode == 39 # right arrow key
+    root.usingKeyboard = true
     incrementActiveIndex()
     return false
   if keycode == 32 # spacebar
-    incrementActiveIndex()
+    #incrementActiveIndex()
+    togglePlayPause()
     return false
   if keycode == 37 # left arrow key
+    root.usingKeyboard = true
     decrementActiveIndex()
     return false
   console.log keycode
