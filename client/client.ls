@@ -23,6 +23,9 @@ getVideoTitle = root.getVideoTitle = (videoID, callback) ->
       return
     callback(null)
 
+Template.gamelist.games = ->
+  return TimingGames.find({})
+
 Template.hello.greeting = ->
   return "Welcome to karaoketutor?"
 
@@ -97,7 +100,6 @@ Template.songtemplate.events {
     (<a href="http://www.google.com/search?q=#{removePunctuation(songname) + ' lyrics'}" target="_blank">Search for Lyrics</a>):<br>
     <textarea style="width: 100%; height: 100%" id="songlyricsinput"></textarea>
     </div>
-
     """, (result) ->
       if result
         songlyrics = $('#songlyricsinput').val().trim()

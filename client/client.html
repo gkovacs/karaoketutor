@@ -11,7 +11,7 @@
 <template name="home">
   {{> topinfo}}
   {{> videoinput}}
-  {{> hello}}
+  {{> gamelist}}
 </template>
 
 <template name="loading">
@@ -33,6 +33,13 @@
       {{> songtemplate}}
     {{/each}}
   </div>
+</template>
+
+<template name="gamelist">
+  <br><br>Games:<br>
+  {{#each games}}
+    <a href="/mktimings?lyricID={{lyricID}}&gameID={{gameID}}" target="_blank">{{songName}}</a><br>
+  {{/each}}
 </template>
 
 <template name="songtemplate">

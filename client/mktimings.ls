@@ -17,6 +17,36 @@ root.gameLogs = {}
 
 root.indexInTimingList = 0
 
+Template.publishgame.publishText = ->
+  if TimingGames.findOne({_id: root.gameID})?
+    return 'Unpublish Game'
+  else
+    return 'Publish Game'
+
+Template.publishgame.events {
+  'click #publishGame': (evt, template) ->
+    if $('#publishGame').text() == 'Publish Game'
+      publishGame()
+    else
+      unpublishGame()
+}
+
+unpublishGame = root.unpublishGame = ->
+  if TimingGames.findOne({_id: root.gameID})?
+    TimingGames.remove({_id: root.gameID})
+
+publishGame = root.publishGame = ->
+  if TimingGames.findOne({_id: root.gameID})?
+    return
+  songName = Songs.findOne({_id: root.videoID}).name
+  TimingGames.insert {
+    _id: root.gameID
+    gameID: root.gameID
+    lyricID: root.lyricID
+    videoID: root.videoID
+    songName: songName
+  }
+
 getTimingLogsFirst = root.getTimingLogs = ->
   return TimingLogs.findOne({_id: root.lyricID + '_0'}).logs
 
@@ -25,6 +55,24 @@ getTimingLogs = root.getTimingLogs = ->
   for timingID in Lyrics.findOne({_id: root.lyricID}).timingIDs
     output.push TimingLogs.findOne({_id: timingID}).logs
   return output
+
+isTimingLogComplete = root.isTimingLogComplete = ->
+  logs = root.gameLogs[root.gameID]
+  idxes = prelude.map (.wordIdx), logs
+  maxWordIdx = prelude.maximum idxes
+  minWordIdx = prelude.minimum idxes
+  videoTimes = prelude.map (.videoTime), logs
+  maxTime = prelude.maximum videoTimes
+  minTime = prelude.minimum videoTimes
+  idxDiff = maxWordIdx - minWordIdx
+  timeDiff = maxTime - minTime
+  console.log 'time diff: ' + timeDiff
+  console.log 'idx diff: ' + idxDiff
+  videoDuration = ytplayer.getDuration()
+  maxIdxDiff = root.numWordsTotal-1
+  console.log 'video duration: ' + videoDuration
+  console.log 'maxIdxDiff: ' + maxIdxDiff
+  return timeDiff > videoDuration*0.75 and idxDiff > maxIdxDiff*0.85
 
 playServerTimingLogsFirst = root.playFirstServerTimingLogs = ->
   #timeList = logsToTimeList(getTimingLogs())
@@ -40,6 +88,8 @@ playServerTimingLogs = root.playServerTimingLogs = ->
 
 submitTimingLogs = root.submitTimingLogs = ->
   logs = root.gameLogs[root.gameID]
+  if logs.length == 0
+    return
   numTimingsForLyric = Lyrics.findOne({_id: root.lyricID}).timingIDs.length
   timingID = root.lyricID + '_' + numTimingsForLyric
   TimingLogs.insert {
@@ -61,11 +111,22 @@ submitTimingLogs = root.submitTimingLogs = ->
 
 playbackRecorded = root.playbackRecorded = (timingList) ->
   root.indexInTimingList = 0
-  root.clientCall('', 'playVideoAtTimeForGame', [0, root.gameID])
+  root.ytplayer.seekTo(0)
+  root.ytplayer.playVideo()
+  #root.clientCall('', 'playVideoAtTimeForGame', [0, root.gameID])
+  setInterval ->
+    timingIdx = Math.round((root.ytplayer.getCurrentTime()+0.05)*4)
+    wordIdx = timingList[timingIdx]
+    setActiveIndex wordIdx
+  , 100
+  /*
   for let wordIdx,timingIdx in timingList
     setTimeout ->
+      if wordIdx <= root.activeIndex
+        return
       setActiveIndex(wordIdx)
     , timingIdx * 250
+  */
   /*
   setInterval ->
     if root.indexInTimingList >= timingList.length
@@ -77,15 +138,18 @@ playbackRecorded = root.playbackRecorded = (timingList) ->
   */
 
 scrollToView = (element) ->
-  offset = element.offset().top
+  offsetTop = element.offset().top
+  offsetBottom = offsetTop + element.height()
   if not element.is(":visible")
     element.css({"visiblity":"hidden"}).show()
-    offset = element.offset().top
+    offsetTop = element.offset().top
+    offsetBottom = offsetTop + element.height()
     element.css({"visiblity":"", "display":""})
   visible_area_start = $(window).scrollTop()
   visible_area_end = visible_area_start + window.innerHeight
-  if offset < visible_area_start or offset > visible_area_end
-    $('html,body').animate({scrollTop: offset - window.innerHeight/3}, 1000);
+  if offsetTop < visible_area_start or offsetBottom > visible_area_end
+    offsetCenter = (offsetTop + offsetBottom)/2
+    $('html,body').animate({scrollTop: offsetCenter - window.innerHeight/3}, 1000);
     return false;
   return true
 
@@ -136,7 +200,9 @@ setActiveIndexAll = root.setActiveIndexAll = (idx) ->
         wordPosInLine: root.activePosInLine
         lineIdx: root.activeLineIndex
       }
-    root.clientCall('', 'setActiveIndexForGame', [idx, root.gameID])
+      if idx == root.numWordsTotal-1 and isTimingLogComplete()
+        submitTimingLogs()
+    root.clientCall('', 'setActiveIndexForGame', [idx, root.gameID, root.userID])
 
 /*
 onPlayerStateChange = root.onPlayerStateChange = -> (event) ->

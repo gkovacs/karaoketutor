@@ -109,8 +109,8 @@ if (Meteor.isClient) {
       console.log('new active index is: ' + idx);
       return root.setActiveIndex(idx);
     },
-    setActiveIndexForGame: function(idx, gameID){
-      if (root.gameID === gameID) {
+    setActiveIndexForGame: function(idx, gameID, sourceUser){
+      if (root.gameID === gameID && root.userID !== sourceUser) {
         return root.setActiveIndex(idx);
       }
     },

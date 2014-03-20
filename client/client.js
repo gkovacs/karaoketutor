@@ -33,6 +33,9 @@ getVideoTitle = root.getVideoTitle = function(videoID, callback){
     return callback(null);
   });
 };
+Template.gamelist.games = function(){
+  return TimingGames.find({});
+};
 Template.hello.greeting = function(){
   return "Welcome to karaoketutor?";
 };
@@ -124,7 +127,7 @@ Template.songtemplate.events({
     songname = template.data.name;
     videoID = template.data.videoID;
     songurl = template.data.url;
-    return bootbox.confirm("<div style=\"height: 300px\">\nPaste in lyrics for <a href=\"" + songurl + "\" target=\"_blank\">" + songname + "</a>\n(<a href=\"http://www.google.com/search?q=" + (removePunctuation(songname) + ' lyrics') + "\" target=\"_blank\">Search for Lyrics</a>):<br>\n<textarea style=\"width: 100%; height: 100%\" id=\"songlyricsinput\"></textarea>\n</div>\n", function(result){
+    return bootbox.confirm("<div style=\"height: 300px\">\nPaste in lyrics for <a href=\"" + songurl + "\" target=\"_blank\">" + songname + "</a>\n(<a href=\"http://www.google.com/search?q=" + (removePunctuation(songname) + ' lyrics') + "\" target=\"_blank\">Search for Lyrics</a>):<br>\n<textarea style=\"width: 100%; height: 100%\" id=\"songlyricsinput\"></textarea>\n</div>", function(result){
       var songlyrics, numLyricsForSong, lyricID;
       if (result) {
         songlyrics = $('#songlyricsinput').val().trim();

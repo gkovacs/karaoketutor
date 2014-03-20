@@ -89,8 +89,8 @@ if Meteor.isClient
     setActiveIndex: (idx) ->
       console.log 'new active index is: ' + idx
       root.setActiveIndex(idx)
-    setActiveIndexForGame: (idx, gameID) ->
-      if root.gameID == gameID
+    setActiveIndexForGame: (idx, gameID, sourceUser) ->
+      if root.gameID == gameID and root.userID != sourceUser
         root.setActiveIndex(idx)
     playVideoAtTimeForGame: (time, gameID) ->
       if root.gameID == gameID and root.ytplayer?

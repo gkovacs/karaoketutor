@@ -4,6 +4,7 @@
     "iron-router": {},
     "client-call": {},
     "jquery-cookie": {},
-    "prelude": {}
+    "prelude": {},
+    "user-status": {}
   }
 }
